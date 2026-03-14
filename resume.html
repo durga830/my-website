@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kesava Code | Master the Future of Technology</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Deep Blue (#0052FF), Slate (#f8fafc), and Green (#16a34a) for trust and growth -->
+    <!-- Application Structure Plan: Single Page Application (SPA) designed as an educational landing page. It flows from a value-driven Hero section -> Course Discovery -> Certificate Proof -> Mentor Trust Building -> Checkout/Conversion. This structure naturally guides a prospective student from awareness to enrollment without needing to load multiple pages. -->
+    <!-- Visualization & Content Choices: Used CSS grids and interactive cards for course discovery (Goal: Explore). Implemented a dynamic checkout state and hidden page toggling using vanilla JS (Goal: Interact/Convert). No external charting libraries were needed as the primary data is categorical (courses). -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        .serif-font { font-family: 'Playfair Display', serif; }
+        .gradient-text {
+            background: linear-gradient(90deg, #2563eb, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hidden-page { display: none; }
+        .course-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; display: flex; flex-direction: column; }
+        .course-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .roadmap-line { border-left: 2px dashed #3b82f6; }
+        input:focus { border-color: #3b82f6; outline: 2px solid #bfdbfe; }
+        
+        /* Mentor Image Styling */
+        .profile-img-container {
+            position: relative;
+            overflow: hidden;
+            border: 6px solid white;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            background-color: #f1f5f9;
+        }
+        .profile-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 20%; /* Focuses on the face */
+        }
+
+        /* Certificate Styling */
+        .certificate-container {
+            background: #fff;
+            border: 15px solid #0f172a;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .certificate-border-inner {
+            border: 2px solid #e2e8f0;
+            margin: 10px;
+            padding: 40px;
+            height: calc(100% - 20px);
+        }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 6rem;
+            opacity: 0.03;
+            pointer-events: none;
+            font-weight: 900;
+        }
+
+        /* Toast */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #0f172a;
+            color: #fff;
+            text-align: center;
+            border-radius: 12px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 flex flex-col min-h-screen">
+
+    <!-- Notification Toast -->
+    <div id="toast" class="flex items-center gap-3 justify-center">
+        <span class="text-green-400 font-bold">✓</span> Data synced!
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-slate-900 flex items-center gap-2 cursor-pointer" onclick="showPage('home')">
+                <span class="bg-blue-600 text-white px-2 py-1 rounded">K</span>
+                <span>Kesava<span class="text-blue-600">Code</span></span>
+            </div>
+            <div id="nav-links" class="hidden md:flex gap-8 font-medium text-slate-600">
+                <button onclick="showPage('home')" class="hover:text-blue-600 transition-colors">Home</button>
+                <button onclick="showPage('home'); setTimeout(() => document.getElementById('courses-section').scrollIntoView(), 100)" class="hover:text-blue-600 transition-colors">Courses</button>
+                <button onclick="showPage('roadmaps')" class="hover:text-blue-600 transition-colors">Roadmaps</button>
+                <button onclick="showPage('mentor')" class="hover:text-blue-600 font-bold text-blue-800 transition-colors">Mentor Profile</button>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="auth-buttons">
+                    <button onclick="showPage('signin')" class="text-slate-600 font-medium px-4 py-2">Sign In</button>
+                    <button onclick="showPage('signin')" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 shadow-lg shadow-blue-200">Join Free</button>
+                </div>
+                <div id="user-profile" class="hidden flex items-center gap-3">
+                    <span id="welcome-text" class="font-medium text-slate-700"></span>
+                    <button onclick="logout()" class="text-sm text-red-500 font-bold underline">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- PAGE: HOME -->
+    <main id="page-home" class="flex-grow">
+        <!-- Hero Section -->
+        <section class="relative pt-20 pb-24 overflow-hidden">
+            <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-block px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-bold mb-6">🎓 PROFESSIONAL TECH MENTORSHIP</div>
+                    <h1 class="text-5xl md:text-7xl font-extrabold leading-tight mb-6">Code with <span class="gradient-text">Durga Sai.</span></h1>
+                    <p class="text-xl text-slate-600 mb-10 leading-relaxed">Master Python, Machine Learning, and C with guidance from industry experts. Simplified learning at affordable prices.</p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="document.getElementById('courses-section').scrollIntoView({behavior: 'smooth'})" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 text-center transition-all">Browse Courses</button>
+                        <button onclick="showPage('mentor')" class="bg-white border-2 border-slate-200 text-slate-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-50 text-center transition-all">Meet the Mentor</button>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-700">
+                        <div class="flex gap-2 mb-4 border-b border-slate-800 pb-4">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <pre class="code-font text-blue-400 text-sm md:text-base leading-relaxed overflow-x-auto">
+<span class="text-purple-400"># Instructor Profile</span>
+<span class="text-white">tutor = {</span>
+    <span class="text-green-400">"name"</span><span class="text-white">: </span><span class="text-green-400">"K. Durga Sai"</span><span class="text-white">,</span>
+    <span class="text-green-400">"exp"</span><span class="text-white">: </span><span class="text-green-400">"3 Years"</span><span class="text-white">,</span>
+    <span class="text-green-400">"status"</span><span class="text-white">: </span><span class="text-green-400">"Teaching..."</span>
+<span class="text-white">}</span></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Courses Section -->
+        <section id="courses-section" class="bg-white py-24 border-t border-slate-100">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl font-bold mb-4">Core Curriculums</h2>
+                    <p class="text-slate-500 text-lg">Focused learning tracks for professional development.</p>
+                </div>
+
+                <!-- CATEGORY: CORE PROGRAMMING -->
+                <div class="mb-16">
+                    <h3 class="text-2xl font-bold mb-8 border-l-4 border-blue-600 pl-4">Core Programming</h3>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="course-card border border-slate-200 rounded-3xl overflow-hidden bg-white">
+                            <div class="h-28 bg-yellow-400 flex items-center justify-center text-5xl">🐍</div>
+                            <div class="p-6 flex flex-col flex-grow">
+                                <h4 class="font-bold text-xl mb-2">Python: Hero</h4>
+                                <p class="text-slate-500 text-sm mb-4">Complete foundation to advanced patterns.</p>
+                                <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                                    <span class="font-bold text-blue-600 text-lg">₹999</span>
+                                    <button onclick="openCheckout('Python: Zero to Hero', 999)" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 transition-colors">Enroll</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="course-card border border-slate-200 rounded-3xl overflow-hidden bg-white">
+                            <div class="h-28 bg-blue-500 flex items-center justify-center text-5xl text-white font-bold">C</div>
+                            <div class="p-6 flex flex-col flex-grow">
+                                <h4 class="font-bold text-xl mb-2">Mastering C</h4>
+                                <p class="text-slate-500 text-sm mb-4">Pointers, Memory, and Logic Building.</p>
+                                <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                                    <span class="font-bold text-blue-600 text-lg">₹799</span>
+                                    <button onclick="openCheckout('Mastering C', 799)" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 transition-colors">Enroll</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="course-card border border-slate-200 rounded-3xl overflow-hidden bg-white">
+                            <div class="h-28 bg-orange-500 flex items-center justify-center text-5xl">☕</div>
+                            <div class="p-6 flex flex-col flex-grow">
+                                <h4 class="font-bold text-xl mb-2">Java Core</h4>
+                                <p class="text-slate-500 text-sm mb-4">Multi-threading, Collections, and JVM.</p>
+                                <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                                    <span class="font-bold text-blue-600 text-lg">₹999</span>
+                                    <button onclick="openCheckout('Java Core Mastery', 999)" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 transition-colors">Enroll</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CATEGORY: DATA SCIENCE & SYSTEMS -->
+                <div class="mb-16">
+                    <h3 class="text-2xl font-bold mb-8 border-l-4 border-purple-600 pl-4">Data Science & Systems</h3>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="course-card border border-slate-200 rounded-3xl overflow-hidden bg-white">
+                            <div class="h-28 bg-purple-600 flex items-center justify-center text-5xl">🤖</div>
+                            <div class="p-6 flex flex-col flex-grow">
+                                <h4 class="font-bold text-xl mb-2">Machine Learning</h4>
+                                <p class="text-slate-500 text-sm mb-4">Regression, Clusters & Scikit-Learn.</p>
+                                <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                                    <span class="font-bold text-blue-600 text-lg">₹1,899</span>
+                                    <button onclick="openCheckout('Machine Learning', 1899)" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 transition-colors">Enroll</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="course-card border border-slate-200 rounded-3xl overflow-hidden bg-white">
+                            <div class="h-28 bg-emerald-500 flex items-center justify-center text-5xl">📊</div>
+                            <div class="p-6 flex flex-col flex-grow">
+                                <h4 class="font-bold text-xl mb-2">Data Analysis</h4>
+                                <p class="text-slate-500 text-sm mb-4">Pandas, NumPy, and Visualization.</p>
+                                <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                                    <span class="font-bold text-blue-600 text-lg">₹1,499</span>
+                                    <button onclick="openCheckout('Data Analysis', 1499)" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 transition-colors">Enroll</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="course-card border border-slate-200 rounded-3xl overflow-hidden bg-white">
+                            <div class="h-28 bg-blue-700 flex items-center justify-center text-5xl">🗄️</div>
+                            <div class="p-6 flex flex-col flex-grow">
+                                <h4 class="font-bold text-xl mb-2">DBMS & SQL</h4>
+                                <p class="text-slate-500 text-sm mb-4">Database design and Query tuning.</p>
+                                <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                                    <span class="font-bold text-blue-600 text-lg">₹1,299</span>
+                                    <button onclick="openCheckout('DBMS & SQL', 1299)" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 transition-colors">Enroll</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Certification Section -->
+        <section class="py-24 bg-slate-50 overflow-hidden border-t border-slate-200">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid md:grid-cols-2 gap-16 items-center">
+                    <div>
+                        <h2 class="text-4xl font-bold mb-6">Earn a Professional Certificate</h2>
+                        <p class="text-slate-600 text-lg mb-8 leading-relaxed">
+                            Stand out to employers with a verified certificate of completion from Kesava Code. Our certificates are industry-recognized markers of technical proficiency and project-based expertise.
+                        </p>
+                        <ul class="space-y-4 mb-8">
+                            <li class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-bold">✓</span>
+                                <span class="font-medium">Shareable on LinkedIn & Portfolios</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-bold">✓</span>
+                                <span class="font-medium">Unique Verification ID</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-bold">✓</span>
+                                <span class="font-medium">Signed by K. Durga Sai</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Sample Certificate Display -->
+                    <div class="certificate-container w-full max-w-2xl aspect-[1.414/1] mx-auto overflow-hidden bg-white">
+                        <div class="certificate-border-inner flex flex-col items-center justify-between relative">
+                            <div class="watermark serif-font">KESAVACODE</div>
+                            
+                            <div class="text-center z-10">
+                                <div class="text-blue-600 font-bold tracking-widest text-xs uppercase mb-2">Certificate of Completion</div>
+                                <h3 class="serif-font text-4xl text-slate-900 font-bold">Kesava Code</h3>
+                            </div>
+
+                            <div class="text-center py-4 z-10">
+                                <p class="text-slate-500 italic text-sm mb-4">This is to proudly certify that</p>
+                                <div class="text-3xl font-bold text-slate-800 border-b-2 border-slate-200 px-8 pb-2 inline-block mb-6">STUDENT NAME</div>
+                                <p class="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">
+                                    has successfully completed the professional course track in
+                                    <span class="block text-slate-900 font-bold mt-2 text-lg uppercase tracking-wider">Advanced Python & Machine Learning</span>
+                                </p>
+                            </div>
+
+                            <div class="w-full flex justify-between items-end z-10">
+                                <div class="text-left border-t border-slate-300 pt-2 pr-8">
+                                    <div class="serif-font text-xl text-slate-900 font-bold leading-tight">K. Durga Sai</div>
+                                    <div class="text-[10px] text-slate-500 uppercase tracking-tighter">Principal Mentor, Kesava Code</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">ID: KC-2026-X982</div>
+                                    <div class="bg-blue-50 px-3 py-1 rounded text-[10px] font-mono text-blue-700 font-bold border border-blue-100">VERIFIED</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- PAGE: MENTOR PROFILE -->
+    <main id="page-mentor" class="hidden-page py-20 bg-white">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Meet Your Mentor</h2>
+                <p class="text-slate-500 text-lg">Learn from someone who has been in the trenches.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-12 items-start">
+                <!-- Avatar Column -->
+                <div class="md:col-span-1">
+                    <div class="sticky top-24">
+                        <!-- USING THE UPLOADED IMAGE HERE -->
+                        <div class="profile-img-container aspect-[3/4] rounded-3xl mb-6">
+                            <img src="WhatsApp%20Image%202026-03-14%20at%203.09.33%20PM.jpeg" alt="K. Durga Sai - Tech Mentor" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%\' height=\'100%\'><rect width=\'100%\' height=\'100%\' fill=\'%23e2e8f0\'/><text x=\'50%\' y=\'50%\' font-family=\'sans-serif\' font-size=\'20\' fill=\'%2364748b\' text-anchor=\'middle\' dy=\'.3em\'>Image Not Found</text></svg>'">
+                        </div>
+                        <h2 class="text-3xl font-extrabold mb-1">K. Durga Sai</h2>
+                        <p class="text-blue-600 font-bold mb-6 text-lg">Principal Tech Mentor</p>
+                        
+                        <div class="space-y-4 border-t border-slate-100 pt-6">
+                            <div class="flex items-center gap-3 text-slate-700 font-medium">
+                                <span class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg">📍</span>
+                                <span>Andhra Pradesh, India</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-700 font-medium">
+                                <span class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg">📅</span>
+                                <span>3+ Years Experience</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-700 font-medium">
+                                <span class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg">🎓</span>
+                                <span>500+ Students Mentored</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Content Column -->
+                <div class="md:col-span-2 space-y-12">
+                    <section class="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                        <h3 class="text-2xl font-bold mb-4 flex items-center gap-3">
+                            <span class="text-blue-600 text-3xl">❝</span>
+                            The Vision
+                        </h3>
+                        <p class="text-slate-700 text-lg leading-relaxed mb-4 italic">
+                            Coding shouldn't be a privilege of the elite. My goal with Kesava Code is to break down complex architectural concepts into simple, digestible modules that anyone with a curious mind can master.
+                        </p>
+                        <p class="text-slate-600 leading-relaxed">
+                            With over 3 years of hands-on experience in software development and specialized training in Data Science, I bridge the gap between academic theory and industry reality. I focus on teaching the "why" before the "how".
+                        </p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                            <span class="w-2 h-8 bg-blue-600 rounded-full"></span>
+                            Expertise Stack
+                        </h3>
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div class="p-6 bg-white rounded-2xl border border-slate-200 hover:border-blue-300 transition-colors shadow-sm">
+                                <div class="text-3xl mb-3">💻</div>
+                                <h4 class="font-bold text-slate-900 mb-2 text-lg">Systems Programming</h4>
+                                <p class="text-sm text-slate-500 leading-relaxed">Deep understanding of C, Data Structures, Algorithms, and Memory Management.</p>
+                            </div>
+                            <div class="p-6 bg-white rounded-2xl border border-slate-200 hover:border-blue-300 transition-colors shadow-sm">
+                                <div class="text-3xl mb-3">🤖</div>
+                                <h4 class="font-bold text-slate-900 mb-2 text-lg">AI & Data Science</h4>
+                                <p class="text-sm text-slate-500 leading-relaxed">Python, Machine Learning models, SQL databases, and Data Analytics.</p>
+                            </div>
+                            <div class="p-6 bg-white rounded-2xl border border-slate-200 hover:border-blue-300 transition-colors shadow-sm">
+                                <div class="text-3xl mb-3">⚙️</div>
+                                <h4 class="font-bold text-slate-900 mb-2 text-lg">Backend Architecture</h4>
+                                <p class="text-sm text-slate-500 leading-relaxed">Java Core, JVM internals, Database Normalization, and API structural design.</p>
+                            </div>
+                            <div class="p-6 bg-white rounded-2xl border border-slate-200 hover:border-blue-300 transition-colors shadow-sm">
+                                <div class="text-3xl mb-3">🎯</div>
+                                <h4 class="font-bold text-slate-900 mb-2 text-lg">Mentorship Style</h4>
+                                <p class="text-sm text-slate-500 leading-relaxed">Logic-first approach. We build from zero to hero through practical implementations.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bg-blue-600 text-white p-10 rounded-3xl shadow-xl shadow-blue-200 flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">Ready to learn together?</h3>
+                            <p class="opacity-90">Join my upcoming batches and transform your skills.</p>
+                        </div>
+                        <button onclick="showPage('home'); setTimeout(() => document.getElementById('courses-section').scrollIntoView(), 100)" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:bg-slate-50 transition-colors whitespace-nowrap w-full sm:w-auto shadow-lg">Explore Courses</button>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PAGE: ROADMAPS -->
+    <main id="page-roadmaps" class="hidden-page py-20 bg-slate-50">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Course Roadmaps</h2>
+                <p class="text-slate-600 text-lg">Comprehensive step-by-step pathways curated by Durga Sai.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-l-4 border-yellow-400 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">🐍 Python Hero</h3>
+                    <div class="roadmap-line pl-6 space-y-6">
+                        <div><h4 class="font-bold text-blue-600">1. Basics</h4><p class="text-xs text-slate-500 mt-1">Syntax, Data Types, Control Flow.</p></div>
+                        <div><h4 class="font-bold text-blue-600">2. Data Structures</h4><p class="text-xs text-slate-500 mt-1">Lists, Dictionaries, Sets.</p></div>
+                        <div><h4 class="font-bold text-blue-600">3. OOPs</h4><p class="text-xs text-slate-500 mt-1">Inheritance, Polymorphism.</p></div>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-l-4 border-purple-600 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">🤖 AI Master</h3>
+                    <div class="roadmap-line pl-6 space-y-6">
+                        <div><h4 class="font-bold text-blue-600">1. Math</h4><p class="text-xs text-slate-500 mt-1">Linear Algebra & Stats.</p></div>
+                        <div><h4 class="font-bold text-blue-600">2. ML Models</h4><p class="text-xs text-slate-500 mt-1">Regression & Trees.</p></div>
+                        <div><h4 class="font-bold text-blue-600">3. Projects</h4><p class="text-xs text-slate-500 mt-1">Real-world deployments.</p></div>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-l-4 border-blue-700 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">🗄️ DBMS & SQL</h3>
+                    <div class="roadmap-line pl-6 space-y-6">
+                        <div><h4 class="font-bold text-blue-600">1. Theory</h4><p class="text-xs text-slate-500 mt-1">ER Models & Normalization.</p></div>
+                        <div><h4 class="font-bold text-blue-600">2. SQL Basics</h4><p class="text-xs text-slate-500 mt-1">CRUD Operations.</p></div>
+                        <div><h4 class="font-bold text-blue-600">3. Advanced</h4><p class="text-xs text-slate-500 mt-1">Joins, Subqueries & Tuning.</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-12">
+                <button onclick="showPage('home'); setTimeout(() => document.getElementById('courses-section').scrollIntoView(), 100)" class="text-blue-600 font-bold hover:underline">← Choose a Course</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- PAGE: CHECKOUT -->
+    <main id="page-checkout" class="hidden-page py-20 bg-slate-50">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-12">
+                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200">
+                    <h2 class="text-3xl font-bold mb-8">Enrollment Details</h2>
+                    <form onsubmit="handlePayment(event)" class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">First Name</label>
+                                <input type="text" id="checkout-fname" required class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Last Name</label>
+                                <input type="text" id="checkout-lname" required class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email Address</label>
+                            <input type="email" id="checkout-email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">WhatsApp Number</label>
+                            <input type="tel" id="checkout-phone" placeholder="+91 " required class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                        </div>
+                        <button type="submit" id="enroll-btn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all mt-4 shadow-lg shadow-blue-200">Secure Enrollment</button>
+                    </form>
+                </div>
+                <div class="pt-6 md:pt-10">
+                    <div class="bg-slate-900 text-white p-8 rounded-3xl shadow-xl sticky top-24">
+                        <p class="text-slate-400 text-sm mb-2 font-medium">Mentor: K. Durga Sai</p>
+                        <h4 id="summary-course-name" class="text-2xl font-bold mb-8 leading-snug">Course Selection</h4>
+                        <div class="space-y-3 mb-8 border-t border-slate-700 pt-6">
+                            <div class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-400">✓</span> Full curriculum access</div>
+                            <div class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-400">✓</span> Direct WhatsApp Mentorship</div>
+                            <div class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-400">✓</span> Verified Certificate</div>
+                        </div>
+                        <div class="flex justify-between border-t border-slate-700 pt-6 items-end">
+                            <span class="text-slate-300">Final Amount</span>
+                            <span id="summary-price" class="text-4xl font-bold text-blue-400">₹0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PAGE: SIGNIN -->
+    <main id="page-signin" class="hidden-page min-h-[80vh] flex items-center justify-center p-6">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl font-bold mb-6 mx-auto">K</div>
+            <h2 class="text-3xl font-bold text-center mb-2">Welcome Back</h2>
+            <p class="text-slate-500 text-center mb-8 text-sm">Join the community of learners.</p>
+            <form onsubmit="handleSignIn(event)" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1 ml-1">Email Address</label>
+                    <input type="email" id="signin-email" required placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-blue-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1 ml-1">Mobile Number</label>
+                    <input type="tel" id="signin-phone" required placeholder="+91 00000 00000" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-blue-500 transition-colors">
+                </div>
+                <button type="submit" id="signin-btn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-colors mt-2 shadow-lg shadow-blue-200">Sign In</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-300 pt-16 pb-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-6 text-center md:text-left">
+            <div class="grid md:grid-cols-2 gap-12 mb-12">
+                <div>
+                    <div class="text-2xl font-bold text-white mb-4 flex items-center justify-center md:justify-start gap-2">
+                        <span class="bg-blue-600 text-white px-2 py-1 rounded text-lg">K</span>
+                        KesavaCode
+                    </div>
+                    <p class="max-w-sm mx-auto md:mx-0 text-slate-400">Mentored by Kudaravalli Durga Sai. Empowering the next generation of software engineers.</p>
+                </div>
+                <div class="flex justify-center md:justify-end gap-12">
+                    <div>
+                        <h4 class="text-white font-bold mb-4 uppercase tracking-wider text-sm">Direct Support</h4>
+                        <a href="https://wa.me/916300097145" target="_blank" class="inline-flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors border border-slate-700">
+                             💬 Chat on WhatsApp
+                        </a>
+                        <p class="mt-4 text-sm font-mono">+91 6300097145</p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+                <p>&copy; 2026 Kesava Code. All rights reserved.</p>
+                <div class="flex gap-4">
+                    <button onclick="showPage('home')" class="hover:text-white">Courses</button>
+                    <button onclick="showPage('mentor')" class="hover:text-white">Mentor</button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // SPREADSHEET URLS
+        const SIGNIN_SHEET_URL = "https://script.google.com/macros/s/AKfycbxyoloV45INJQq1ojSi4VWuP8rzpAjQ7G3pgMrndXi5Qbx7Bc65WFq8nl3APLcsR01T9g/exec"; 
+        const ENROLL_SHEET_URL = "https://script.google.com/macros/s/AKfycbxyoloV45INJQq1ojSi4VWuP8rzpAjQ7G3pgMrndXi5Qbx7Bc65WFq8nl3APLcsR01T9g/exec"; 
+
+        function showToast() {
+            var x = document.getElementById("toast");
+            x.className = "flex items-center gap-3 justify-center show";
+            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+        }
+
+        async function sendToSheet(url, data) {
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...data, timestamp: new Date().toLocaleString() })
+                });
+                showToast();
+            } catch (e) { console.error(e); }
+        }
+
+        function showPage(pageId) {
+            ['home', 'signin', 'roadmaps', 'checkout', 'mentor'].forEach(p => {
+                const element = document.getElementById('page-' + p);
+                if (element) element.classList.add('hidden-page');
+            });
+            const activePage = document.getElementById('page-' + pageId);
+            if (activePage) activePage.classList.remove('hidden-page');
+            window.scrollTo(0,0);
+        }
+
+        function openCheckout(courseName, price) {
+            document.getElementById('summary-course-name').innerText = courseName;
+            document.getElementById('summary-price').innerText = '₹' + price.toLocaleString();
+            showPage('checkout');
+        }
+
+        async function handleSignIn(event) {
+            event.preventDefault();
+            const email = document.getElementById('signin-email').value;
+            const phone = document.getElementById('signin-phone').value;
+            const btn = document.getElementById('signin-btn');
+            
+            btn.innerText = "Signing in...";
+            btn.disabled = true;
+            
+            await sendToSheet(SIGNIN_SHEET_URL, { type: 'SIGN_IN', email: email, phone: phone });
+            
+            localStorage.setItem('kesava_user', email);
+            updateUI();
+            
+            btn.innerText = "Sign In";
+            btn.disabled = false;
+            showPage('home');
+        }
+
+        async function handlePayment(event) {
+            event.preventDefault();
+            const btn = document.getElementById('enroll-btn');
+            const course = document.getElementById('summary-course-name').innerText;
+            const price = document.getElementById('summary-price').innerText;
+            const fname = document.getElementById('checkout-fname').value;
+            const lname = document.getElementById('checkout-lname').value;
+            const email = document.getElementById('checkout-email').value;
+            const phone = document.getElementById('checkout-phone').value;
+            
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+            
+            // 1. Record to spreadsheet
+            await sendToSheet(ENROLL_SHEET_URL, { 
+                type: 'ENROLLMENT', 
+                name: `${fname} ${lname}`, 
+                email: email, 
+                phone: phone, 
+                course: course, 
+                price: price 
+            });
+
+            // 2. Construct WhatsApp Link
+            const myWhatsapp = "916300097145";
+            const message = `Hello Durga Sai! I am ${fname} ${lname}. I want to enroll in *${course}* (${price}). Please help me finish the payment!`;
+            const waUrl = `https://wa.me/${myWhatsapp}?text=${encodeURIComponent(message)}`;
+
+            // 3. Show Success UI
+            document.body.innerHTML = `
+                <div class="min-h-screen flex flex-col items-center justify-center text-center p-6 bg-slate-50 font-sans">
+                    <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-5xl mb-8 shadow-sm">✓</div>
+                    <h1 class="text-4xl font-extrabold mb-4 text-slate-900">Registration Received!</h1>
+                    
+                    <div class="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl mb-8 max-w-md w-full relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+                        <p class="text-slate-400 text-xs uppercase font-bold tracking-widest mb-3">Selected Course</p>
+                        <h2 class="text-2xl font-bold text-slate-900 mb-2">${course}</h2>
+                        <p class="text-blue-600 font-bold text-lg mb-6">${price}</p>
+                        
+                        <div class="bg-slate-50 p-4 rounded-xl text-left border border-slate-100">
+                            <p class="text-sm text-slate-600 font-medium mb-1">Student: <span class="text-slate-900">${fname} ${lname}</span></p>
+                            <p class="text-sm text-slate-600 font-medium">Status: <span class="text-amber-500 font-bold">Pending Payment</span></p>
+                        </div>
+                    </div>
+
+                    <p class="text-slate-600 mb-8 max-w-md text-lg leading-relaxed">
+                        To confirm your enrollment and get instant access, please message <b>Durga Sai</b> directly on WhatsApp.
+                    </p>
+
+                    <div class="flex flex-col gap-4 w-full max-w-xs">
+                        <a href="${waUrl}" target="_blank" class="bg-green-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-200 flex items-center justify-center gap-2 text-lg">
+                            <span>💬 Message Mentor</span>
+                        </a>
+                        <button onclick="location.reload()" class="text-slate-500 font-medium hover:text-slate-900 transition-colors mt-4">Return to Website</button>
+                    </div>
+                </div>`;
+        }
+
+        function logout() {
+            localStorage.removeItem('kesava_user');
+            updateUI();
+            showPage('home');
+        }
+
+        function updateUI() {
+            const user = localStorage.getItem('kesava_user');
+            const authBtns = document.getElementById('auth-buttons');
+            const userProf = document.getElementById('user-profile');
+            if (user) {
+                authBtns.classList.add('hidden');
+                userProf.classList.remove('hidden');
+                document.getElementById('welcome-text').innerText = "Hi, " + user.split('@')[0];
+                const checkoutEmail = document.getElementById('checkout-email');
+                if (checkoutEmail) checkoutEmail.value = user;
+            } else {
+                authBtns.classList.remove('hidden');
+                userProf.classList.add('hidden');
+            }
+        }
+        
+        window.onload = updateUI;
+    </script>
+</body>
+</html>
